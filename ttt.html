@@ -1,0 +1,617 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Skylark TTS</title>
+
+  <style type="text/css">
+    #toc_container {
+      background: #f9f9f9 none repeat scroll 0 0;
+      border: 1px solid #aaa;
+      display: table;
+      font-size: 95%;
+      padding-top: 20px;
+      padding-left: 20px;
+      padding-right: 20px;
+      padding-bottom: 8px;
+      width: auto;
+    }
+    .toc_title {
+      font-weight: 700;
+      font-size: 18pt;
+      text-align: left;
+    }
+    #toc_container ul  {
+      list-style: outside none none !important; margin-left: -40px;
+    }
+    .h2_explainer {
+      margin-bottom: 2px;
+    }
+    .paper_title {
+      font-style: italic;
+    }
+    .paper_date {
+      font-weight: bold;
+    }
+    .list_font {
+      font-size: 95%;
+    }
+  </style>
+
+</head>
+
+
+<body>
+<h1>Skylark & Lyrebird Demos</h1>
+<p>Skylark 提供多个声音；</p>
+<p>通过 SSML 可以控制 <b>语速</b>、<b>音高</b>、<b>音量</b> (Prosody) 和 <b>强调</b> (Emphasis) 等。更多 SSML 标签和功能见<a href="https://wiki.liulishuo.work/pages/viewpage.action?pageId=34211519">wiki</a>；
+</p>
+<p>提供 proto 形式的服务支持，提供<a href="https://skylark-feat.llssite.com/">内容生产平台</a>用于可视化操作；</p>
+<p>Lyrebird 支持 <b>多语种合成</b> (合成中文、英文以及中英混合的句子)、<b>跨语种声音克隆</b> (使原本不会说中文的英文发音人说中文，不会说英文的中文发音人说英文) 和 <b>口音控制</b> (控制合成句子的中文及英文口音)。</p>
+
+<p class="toc_title">Contents</p>
+<div id="toc_container">
+  <ul>
+    <li><a href="#multivoices">Multi-Voices</a>
+    <li><a href="#prosody">Prosody</li>
+    <ol>
+      <li><a href="#rate"> 语速控制 </a></li>
+      <li><a href="#pitch"> 音高控制 </a></li>
+      <li><a href="#range"> 表现力控制 </a></li>
+      <li><a href="#volume"> 音量控制 </a></li>
+      <li><a href="#combine"> 混合控制 </a></li>
+    </ol>
+    <li><a href="#emphasis">Emphasis</li>
+    <l1><a href="#frontend">内容生产平台服务</l1>
+    <li><a href="#lyrebird">Lyrebird</li>
+    <ol>
+      <li><a href="#multi_tts">多语种合成</a></li>
+      <li><a href="#cross_tts">跨语种声音克隆</a></li>
+      <li><a href="#accent_tts">口音控制</a></li>
+    </ol>
+  </ul>
+</div>
+
+<a name="multivoices"><h2>Multi-Voices</h2></a>
+
+<p> Skylark 提供多个音色：</p>
+<table>
+  <tbody>
+  <tr>
+    <th nowrap>voice name</th>
+    <th nowrap>audio samples</th>
+  </tr>
+  <tr>
+    <td align="left">en-US-TDWaveRNN-MB</td>
+    <th><audio controls=""><source src="https://audio-demos-multivoices.oss-cn-shanghai.aliyuncs.com/en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">en-US-TDWaveRNN-MC</td>
+    <th><audio controls=""><source src="https://audio-demos-multivoices.oss-cn-shanghai.aliyuncs.com/en-US-TDWaveRNN-MC.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">en-US-TDWaveRNN-FC</td>
+    <th><audio controls=""><source src="https://audio-demos-multivoices.oss-cn-shanghai.aliyuncs.com/en-US-TDWaveRNN-FC.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">en-US-TDWaveRNN-FL</td>
+    <th><audio controls=""><source src="https://audio-demos-multivoices.oss-cn-shanghai.aliyuncs.com/en-US-TDWaveRNN-FL.wav"></audio></th>
+  </tr>
+  </tbody>
+</table>
+
+<a name="prosody"><h2>Prosody</h2></a>
+
+<p>prosody 标签提供语音合成韵律控制的相关功能，目前包括语速、音高（pitch）、表现力（pitch变化幅度）及音量。</p>
+<p>该标签支持对<b>整句/子句/词组/单词</b>进行控制。</p>
+<p>该标签内部仅支持 sub, say-as, break, phoneme 四种 SSML 标签的嵌套，不支持 voice，style，emphasis 等标签，也不支持同类嵌套。</p>
+<p>未指定 prosody 的情况下，默认各个特征均按照 medium 的形式表现。</p>
+
+<a name="global"><h3>SynthesizeSpeechRequest.AudioConfig</h2></a>
+<p>除通过 SSML 对 Prosody（语速、音高、表现力、音量）进行逐句控制之外，也可以通过 <a href="https://git.llsapp.com/common/protos/-/blob/master/liulishuo/algorithm/tts/tts.proto#L156">tts.proto</a> 进行全局的控制，通过这个接口 CMS 可以对全部句子控制语速、音高、表现力、音量。 </p>
+
+<a name="rate"><h3>语速控制</h2></a>
+
+<p>语速通过 &ltprosody&gt 标签的 rate 属性进行指定，rate 的指定有三类合法取值。</p>
+<ol class="list_font">
+  <li><b> [0.5, 1.5]范围内的一个浮点数</b>：表示在 rate="medium" 的基础上，语速变化的倍数，例如：</li>
+    <p><span style="background-color: #EEE">&ltprosody <b>rate="0.8"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+  <li><b>slow，medium，fast</b>：分别表示速度的慢、中、快（默认情况取 rate="medium" 的效果），例如：</li>
+    <p><span style="background-color: #EEE">&ltprosody <b>rate="fast"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+    与 medium 语速对应关系大致为：
+    <table border="1" cellspacing="0" cellpadding="10">
+      <tr>
+        <th>指标</th>
+        <td>slow</td>
+        <td>medium</td>
+        <td>fast</td>
+      </tr>
+      <tr>
+        <th>倍速</th>
+        <td>0.75</td>
+        <td>1.0</td>
+        <td>1.25</td>
+      </tr>
+    </table>
+  <li><b>CEFR_A1, CEFR_A2, CEFR_B1, CEFR_B2, CEFR_C1</b>：参照<a href="https://wiki.liulishuo.work/pages/viewpage.action?pageId=42124380">wiki</a>，控制语速至标定的各个级别的要求</li>
+    <p><span style="background-color: #EEE">&ltprosody <b>rate="CEFR_A1"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+    与 medium 语速对应关系大致为：
+    <table border="1" cellspacing="0" cellpadding="10">
+      <tr>
+        <th>等级</th>
+        <td>A1</td>
+        <td>A2</td>
+        <td>B1</td>
+        <td>B2</td>
+        <td>C1</td>
+      </tr>
+      <tr>
+        <th>倍速</th>
+        <td>0.58</td>
+        <td>0.70</td>
+        <td>0.83</td>
+        <td>0.99</td>
+        <td>1.13</td>
+      </tr>
+    </table>
+</ol>
+
+<h4>音频示例</h4>
+<table>
+  <tbody>
+  <tr>
+    <th nowrap>Text</th>
+    <th nowrap>rate=slow</th>
+    <th nowrap>rate=medium</th>
+    <th nowrap>rate=fast</th>
+  </tr>
+  <tr>
+    <td align="left">A filing case is now hard to buy..</td>
+    <th><audio controls=""><source src="https://audio-demos-rate-slow.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-rate-fast.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">A quart of milk is water for the most part.</td>
+    <th><audio controls=""><source src="https://audio-demos-rate-slow.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-rate-fast.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Most of the news is easy for us to hear.</td>
+    <th><audio controls=""><source src="https://audio-demos-rate-slow.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-rate-fast.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">The price is fair for a good antique clock.</td>
+    <th><audio controls=""><source src="https://audio-demos-rate-slow.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-rate-fast.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Try to trace the fine lines of the painting.</td>
+    <th><audio controls=""><source src="https://audio-demos-rate-slow.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-rate-fast.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  </tbody>
+</table>
+
+<a name="pitch"><h3>音高控制</h2></a>
+
+<p>音高通过 &ltprosody&gt 标签的 pitch 属性进行指定，pitch 的指定有两类合法取值。</p>
+<ol class="list_font">
+  <li><b>[-10.0, 5.0] 范围内的一个浮点数</b>：表示在 rate="medium" 的基础上，音高变化 semitone 的数量，例如：</li>
+    <p><span style="background-color: #EEE">&ltprosody <b>pitch="1.0"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+    <p><span style="background-color: #EEE">&ltprosody <b>pitch="-0.8"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+  <li><b>low，medium，high</b>：分别表示音高的相对低、中、高（默认情况取 pitch="medium" 的效果），例如：</li>
+    <p><span style="background-color: #EEE">&ltprosody <b>pitch="high"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+    与 medium 音高对应关系大致为：
+    <table border="1" cellspacing="0" cellpadding="10">
+      <tr>
+        <th>指标</th>
+        <td>low</td>
+        <td>medium</td>
+        <td>high</td>
+      </tr>
+      <tr>
+        <th>对应 semitone 变化</th>
+        <td>-1.7</td>
+        <td>0.0</td>
+        <td>1.7</td>
+      </tr>
+    </table>
+</ol>
+
+<h4>音频示例</h4>
+<table>
+  <tbody>
+  <tr>
+    <th nowrap>Text</th>
+    <th nowrap>pitch=low</th>
+    <th nowrap>pitch=medium</th>
+    <th nowrap>pitch=high</th>
+  </tr>
+  <tr>
+    <td align="left">A filing case is now hard to buy..</td>
+    <th><audio controls=""><source src="https://audio-demos-pitch-low.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-pitch-high.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">A quart of milk is water for the most part.</td>
+    <th><audio controls=""><source src="https://audio-demos-pitch-low.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-pitch-high.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Most of the news is easy for us to hear.</td>
+    <th><audio controls=""><source src="https://audio-demos-pitch-low.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-pitch-high.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">The price is fair for a good antique clock.</td>
+    <th><audio controls=""><source src="https://audio-demos-pitch-low.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-pitch-high.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Try to trace the fine lines of the painting.</td>
+    <th><audio controls=""><source src="https://audio-demos-pitch-low.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-pitch-high.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  </tbody>
+</table>
+
+<a name="range"><h3>表现力控制</h2></a>
+
+<p>声音表现力通过 &ltprosody&gt 标签的 range 属性进行指定，range 的指定有两类合法取值。</p>
+<ol class="list_font">
+  <li><b>[-4.0, 4.0] 范围内的一个浮点数</b>：表示在 range="medium" 的基础上，表现力的变化幅度，例如：</li>
+    <p><span style="background-color: #EEE">&ltprosody <b>range="1.0"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+    <p><span style="background-color: #EEE">&ltprosody <b>range="-2.8"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+  <li><b>low，medium，high</b>：分别表示声音相对低沉、普通、活泼（默认情况取 range="medium" 的效果），例如：</li>
+    <p><span style="background-color: #EEE">&ltprosody <b>range="high"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+    与 medium 对应关系大致为：
+    <table border="1" cellspacing="0" cellpadding="10">
+      <tr>
+        <th>指标</th>
+        <td>low</td>
+        <td>medium</td>
+        <td>high</td>
+      </tr>
+      <tr>
+        <th>对应数值</th>
+        <td>-2.0</td>
+        <td>0.0</td>
+        <td>2.0</td>
+      </tr>
+    </table>
+  </ol>
+
+<h4>音频示例</h4>
+<table>
+  <tbody>
+  <tr>
+    <th nowrap>Text</th>
+    <th nowrap>range=low</th>
+    <th nowrap>range=medium</th>
+    <th nowrap>range=high</th>
+  </tr>
+  <tr>
+    <td align="left">A filing case is now hard to buy..</td>
+    <th><audio controls=""><source src="https://audio-demos-range-low.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-range-high.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">A quart of milk is water for the most part.</td>
+    <th><audio controls=""><source src="https://audio-demos-range-low.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-range-high.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Most of the news is easy for us to hear.</td>
+    <th><audio controls=""><source src="https://audio-demos-range-low.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-range-high.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">The price is fair for a good antique clock.</td>
+    <th><audio controls=""><source src="https://audio-demos-range-low.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-range-high.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Try to trace the fine lines of the painting.</td>
+    <th><audio controls=""><source src="https://audio-demos-range-low.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-range-high.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  </tbody>
+</table>
+
+<a name="volume"><h3>音量控制</h2></a>
+
+<p>音量通过 &ltprosody&gt 标签的 volume 属性进行指定，volume 的指定有两类合法取值：</p>
+<ol class="list_font">
+  <li><b>[-5.0, 5.0] 范围内的一个浮点数</b>：表示在 volume="medium" 的基础上音量的变化，单位为dB，例如：</li>
+    <p><span style="background-color: #EEE">&ltprosody <b>volume="4.0"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+    <p><span style="background-color: #EEE">&ltprosody <b>volume="-2.1"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+  <li><b>soft, medium, loud</b>：分别表示音量的低、中、高（默认情况取 volume="medium" 的效果），例如：</li>
+    <p><span style="background-color: #EEE">&ltprosody <b>volume="soft"</b>&gt YOUR SENTENCE. &lt/prosody&gt</span></p>
+    与 medium 对应关系大致为：
+    <table border="1" cellspacing="0" cellpadding="10">
+      <tr>
+        <th>指标</th>
+        <td>low</td>
+        <td>medium</td>
+        <td>high</td>
+      </tr>
+      <tr>
+        <th>对应数值</th>
+        <td>-7.0</td>
+        <td>0.0</td>
+        <td>7.0</td>
+      </tr>
+    </table>
+  <li>不建议（频繁）使用 SSML 修改音量，如果觉得 TTS 声音音量整体需要调整可以联系 TTS 程序员修改默认值或通过 SynthesizeSpeechRequest.AudioConfig 的方式进行音量调整（范围是 [-96.0, 16.0]）</li>
+</ol>
+
+<h4>音频示例</h4>
+<table>
+  <tbody>
+  <tr>
+    <th nowrap>Text</th>
+    <th nowrap>volume=soft</th>
+    <th nowrap>volume=medium</th>
+    <th nowrap>volume=loud</th>
+  </tr>
+  <tr>
+    <td align="left">A filing case is now hard to buy..</td>
+    <th><audio controls=""><source src="https://audio-demos-volume-soft.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-volume-loud.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">A quart of milk is water for the most part.</td>
+    <th><audio controls=""><source src="https://audio-demos-volume-soft.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-volume-loud.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Most of the news is easy for us to hear.</td>
+    <th><audio controls=""><source src="https://audio-demos-volume-soft.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-volume-loud.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">The price is fair for a good antique clock.</td>
+    <th><audio controls=""><source src="https://audio-demos-volume-soft.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-volume-loud.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Try to trace the fine lines of the painting.</td>
+    <th><audio controls=""><source src="https://audio-demos-volume-soft.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-medium.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+    <th><audio controls=""><source src="https://audio-demos-volume-loud.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  </tbody>
+</table>
+
+<a name="combine"><h3>混合控制</h3></a>
+
+<p>语速，音高和音量的控制属性通过 SSML 可以同时指定，以达到混合控制的效果。</p>
+<p>标签内各个属性的顺序没有关系</p>
+<p>控制标签可以控制整句、词组、子句和单词。</p>
+<p>例如：</p>
+  <p><span style="background-color: #EEE"><b>&ltprosody volume="soft" rate="fast" pitch="high"&gt</b> YOUR SENTENCE. <b>&lt/prosody&gt</b></span></p>
+  <p><span style="background-color: #EEE">PRIOR WORDS <b>&ltprosody volume="soft" rate="fast"&gt</b> CONTROLLED WORDS <b>&lt/prosody&gt</b> POSTERIOR WORDS.</span></p>
+
+<h4>音频示例</h4>
+<table>
+  <tbody>
+  <tr>
+    <th nowrap>SSML command</th>
+    <th nowrap>audio samples</th>
+  </tr>
+  <tr>
+    <td align="left"><b>&ltprosody volume="soft" rate="fast"&gt</b> A filing case is now hard to buy.. <b>&lt/prosody&gt</b></td>
+    <th><audio controls=""><source src="https://audio-demos-combine.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left"><b>&ltprosody pitch="high" volume="loud"&gt</b> A quart of milk is water for the most part. <b>&lt/prosody&gt</b></td>
+    <th><audio controls=""><source src="https://audio-demos-combine.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left"><b>&ltprosody pitch="low" rate="slow"&gt</b> Most of the news <b>&lt/prosody&gt</b> <b>&ltprosody pitch="high" rate="fast"&gt</b> is easy for us to hear. <b>&lt/prosody&gt</b></td>
+    <th><audio controls=""><source src="https://audio-demos-combine.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left"><b>&ltprosody pitch="high" rate="slow"&gt</b> The price is fair for a good antique clock. <b>&lt/prosody&gt</b></td>
+    <th><audio controls=""><source src="https://audio-demos-combine.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left"><b>&ltprosody pitch="high" rate="CEFR_B2" volume="-2.0"&gt</b> Try to trace the fine lines of the painting. <b>&lt/prosody&gt</b></td>
+    <th><audio controls=""><source src="https://audio-demos-combine.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  </tbody>
+</table>
+
+<a name="proto"><h3></h3></a>
+
+
+<a name="emphasis"><h2>Emphasis</h2></a>
+
+<p>emphasis 标签提供单词、词组或子句的强调功能，效果为<b>放慢语速和提高音量</b>。</p>
+<p>该标签内部仅支持 sub, say-as, break, phoneme 四种标签的嵌套，不支持 voice，style，prosody 等标签，也不支持同类嵌套。</p>
+<p>该标签包含属性 level，有两类合法的取值：</p>
+<ol class="list_font">
+  <li><b>reduced, none, moderate, strong</b>：表示四种强调程度，语速和音量的表现程度依次递增。其中 reduced 表示减弱效果（即语速加快，音量减小）；none 表示程度不变；moderate 表示较轻的强调效果；strong 表示较重的强调效果。使用例如：</li>
+    <p><span style="background-color: #EEE">PRIOR WORDS <b>&ltemphasis level="moderate"&gt</b> EMPHASISED WORDS <b>&lt/emphasis&gt</b> POSTERIOR WORDS.</span></p>
+  <li><b>[-1.0, 1.0] 范围内的一个浮点数</b>：表示从 level="reduced" 到 level="strong"的连续变化范围。level="0.0" 对应 level="none"。例如：</li>
+    <p><span style="background-color: #EEE">PRIOR WORDS <b>&ltemphasis level="0.5"&gt</b> EMPHASISED WORDS <b>&lt/emphasis&gt</b> POSTERIOR WORDS.</span></p>
+</ol>
+
+<h4>音频示例</h4>
+<table>
+  <tbody>
+  <tr>
+    <th nowrap>SSML command</th>
+    <th nowrap>audio samples</th>
+  </tr>
+  <tr>
+    <td align="left">A filing <b>&ltemphasis level="strong"&gt case &lt/emphasis&gt</b> is now hard to buy.</td>
+    <th><audio controls=""><source src="https://audio-demos-emphasis.oss-cn-shanghai.aliyuncs.com/0001-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">A quart of milk is water for the <b>&ltemphasis level="strong"&gt most &lt/emphasis&gt</b> part.</td>
+    <th><audio controls=""><source src="https://audio-demos-emphasis.oss-cn-shanghai.aliyuncs.com/0002-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Most of the news is <b>&ltemphasis level="strong"&gt easy &lt/emphasis&gt</b> for us to hear.</td>
+    <th><audio controls=""><source src="https://audio-demos-emphasis.oss-cn-shanghai.aliyuncs.com/0003-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">The price is fair for a good <i>&ltemphasis level="reduced"&gt antique clock.&lt/emphasis&gt</i></td>
+    <th><audio controls=""><source src="https://audio-demos-emphasis.oss-cn-shanghai.aliyuncs.com/0004-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  <tr>
+    <td align="left">Try to trace <b>&ltemphasis level="strong"&gt the fine lines &lt/emphasis&gt</b> of the painting.</td>
+    <th><audio controls=""><source src="https://audio-demos-emphasis.oss-cn-shanghai.aliyuncs.com/0005-en-US-TDWaveRNN-MB.wav"></audio></th>
+  </tr>
+  </tbody>
+</table>
+
+<a name="frontend"><h2>内容生产平台服务</h2></a>
+
+<p>Skylark 提供可视化的前端页面作为内容生产平台，用户可在<a href="https://skylark-feat.llssite.com/">网页</a>中操作来使用合成服务。</p>
+<p>用户可在各个控制栏指定需要的韵律指标（语速、音高、音量等），同时网页也支持直接输入 SSML 来进行合成。</p>
+<p>一次性输入多个句子/SSML可进行批量合成，句子以换行分隔。</p>
+
+
+<a name="lyrebird"><h2>Lyrebird</h2></a>
+
+<a name="multi_tts"><h3>多语种合成</h3></a>
+
+<a name="multi_tts.sample"><h4>英文</h4></a>
+<div class="text_gst">Text: Madonna was her teenage heroine.</div>
+<table>
+  <tbody>
+  <tr>
+    <td nowrap>Speaker 1</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//en_202672_en-US_zh-CN-TDWaveRNN-MB.wav"></audio></td>
+  </tr>
+  <tr>
+    <td nowrap>Speaker 2</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//en_202672_en-US_zh-CN-TDWaveRNN-FC.wav"></audio></td>
+  </tr>
+  </tbody>
+</table>
+<a name="multi_tts.sample"><h4>中文</h4></a>
+<div class="text_gst">Text: 水乳交融的民族亲情久经陈酿.</div>
+<table>
+  <tbody>
+  <tr>
+    <td nowrap>Speaker 3</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//ch_103955_en-US_zh-CN-TDWaveRNN-FI.wav"></audio></td>
+  </tr>
+  </tbody>
+</table>
+<a name="multi_tts.sample"><h4>中英混合</h4></a>
+<div class="text_gst">Text: Lobby for 的意思是极力争取、游说，例如：lobby for changes in the law.</div>
+<table>
+  <tbody>
+  <tr>
+    <td nowrap>Speaker 1</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//bi_300258_en-US_zh-CN-TDWaveRNN-MB.wav"></audio></td>
+  </tr>
+  <tr>
+    <td nowrap>Speaker 2</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//bi_300258_en-US_zh-CN-TDWaveRNN-FC.wav"></audio></td>
+  </tr>
+  <tr>
+    <td nowrap>Speaker 3</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//bi_300258_en-US_zh-CN-TDWaveRNN-FI.wav"></audio></td>
+  </tr>
+  </tbody>
+</table>
+
+<a name="cross_tts"><h3>跨语种声音克隆</h3></a>
+<a name="multi_tts.sample"><h4>使原本不会说中文的英文发音人说中文</h4></a>
+<table>
+  <tbody>
+  <tr>
+    <td nowrap></td>
+    <td align="center">Reference </td>
+      <td align="center"><div class="text_gst">Text: 海南的香蕉肉大皮薄、口味香甜而粗纤维少.</div></td>
+      <td align="center"><div class="text_gst">Text: 水乳交融的民族亲情久经陈酿.</div></td>
+  </tr>
+  <tr>
+    <td nowrap>Speaker 1</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//griffin_0c6be7940f2895c8a791a5870bc52d82_000000_000005.wav"></audio></td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//ch_102172_en-US_zh-CN-TDWaveRNN-MB.wav"></audio></td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//ch_103955_en-US_zh-CN-TDWaveRNN-MB.wav"></audio></td>
+  </tr>
+  <tr>
+    <td nowrap>Speaker 2</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//lisa_0745ce74de66cbc35f07c9770a5c7454_000001_000004.wav"></audio></td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//ch_102172_en-US_zh-CN-TDWaveRNN-FC.wav"></audio></td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//ch_103955_en-US_zh-CN-TDWaveRNN-FC.wav"></audio></td>
+  </tr>
+  </tbody>
+</table>
+
+<a name="accent_tts"><h3>口音控制</h3></a>
+<table>
+    <tbody>
+  <tr>
+    <td nowrap></td>
+    <td align="left"><div class="text_gst">Text: 海南的香蕉肉大皮薄、口味香甜而粗纤维少.</div></td>
+      <td align="left"><div class="text_gst">Text: 水乳交融的民族亲情久经陈酿.</div></td>
+  </tr>
+  <tr>
+    <td nowrap>Reference Speaker 1</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//griffin_0c6be7940f2895c8a791a5870bc52d82_000000_000005.wav"></audio></td>
+  </tr>
+  <tr>
+    <td nowrap>Language id=Mandarin</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//ch_102172_en-US_zh-CN-TDWaveRNN-MB.wav"></audio></td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//ch_103955_en-US_zh-CN-TDWaveRNN-MB.wav"></audio></td>
+  </tr>
+  <tr>
+    <td nowrap>Language id=English</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//accent_ch_102172_en-US_zh-CN-TDWaveRNN-MB.wav"></audio></td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//accent_ch_103955_en-US_zh-CN-TDWaveRNN-MB.wav"></audio></td>
+  </tr>
+  </tbody>
+  <tbody>
+  <tr>
+    <td nowrap></td>
+    <td align="left"><div class="text_gst">Text: 海南的香蕉肉大皮薄、口味香甜而粗纤维少.</div></td>
+      <td align="left"><div class="text_gst">Text: 水乳交融的民族亲情久经陈酿.</div></td>
+  </tr>
+  <tr>
+    <td nowrap>Reference Speaker 2</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//lisa_0745ce74de66cbc35f07c9770a5c7454_000001_000004.wav"></audio></td>
+  </tr>
+  <tr>
+    <td nowrap>Language id=Mandarin</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//ch_102172_en-US_zh-CN-TDWaveRNN-FC.wav"></audio></td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//ch_103955_en-US_zh-CN-TDWaveRNN-FC.wav"></audio></td>
+  </tr>
+  <tr>
+    <td nowrap>Language id=English</td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//accent_ch_102172_en-US_zh-CN-TDWaveRNN-FC.wav"></audio></td>
+    <td><audio controls=""><source src="https://audio-demos-lyrebird.oss-cn-shanghai.aliyuncs.com//accent_ch_103955_en-US_zh-CN-TDWaveRNN-FC.wav"></audio></td>
+  </tr>
+  </tbody>
+
+</table>
+
+</body>
+</html>

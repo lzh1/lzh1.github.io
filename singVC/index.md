@@ -1,7 +1,6 @@
 ---
 layout: PPG-based
 ---
-Zhonghao Li
 
 Text can be **bold**, _italic_, or ~~strikethrough~~.
 

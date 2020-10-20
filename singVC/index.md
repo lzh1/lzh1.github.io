@@ -12,7 +12,7 @@ There should be whitespace between paragraphs. We recommend including a README, 
 
 # Header 1
 
-(audios/AM2/m6/F_CDF008_XT_097_023-02_F_CDF008_XT_097_023-02.npy.wav)
+(https://lzh1.github.io/singVC/audios/AM2/m6/F_CDF008_XT_097_023-02_F_CDF008_XT_097_023-02.npy.wav)
 
 This is a normal paragraph following a header. GitHub is a code hosting platform for version control and collaboration. It lets you and others work together on projects from anywhere.
 

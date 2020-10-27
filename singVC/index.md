@@ -86,7 +86,7 @@ The following audio samples are from the target female and male singers.
 | + MS **\(Proposed\)** | <audio id="audio" controls="" preload="none" style="width: 140px;height: 50px"> <source id="wav" src="audios/AM2/m6/F_CDF008_XT_097_023-02_F_CDF008_XT_097_023-02.npy.wav"></audio> | <audio id="audio" controls="" preload="none" style="width: 140px;height: 50px"> <source id="wav" src="audios/AM2/m6/F_F007_WXR_011_026-01_F_F007_WXR_011_026-01.npy.wav"></audio> | <audio id="audio" controls="" preload="none" style="width: 140px;height: 50px"> <source id="wav" src="audios/AM2/m6/M_CDM008_GG_99_032-02_M_CDM008_GG_99_032-02.npy.wav"></audio> | <audio id="audio" controls="" preload="none" style="width: 140px;height: 50px"> <source id="wav" src="audios/AM2/m6/M_M003_CYC_018_020-02_M_M003_CYC_018_020-02.npy.wav"></audio> |
 
 
-## Noisy Samples
+## Noise Robustness Tests
 
 #### source SNR = 15.30
 

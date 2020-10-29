@@ -7,7 +7,7 @@ layout: default
 <center>Zhonghao Li, Benlai Tang, Xiang Yin, Yuan Wan, Ling Xu, Chen Shen, Zejun Ma</center>
  -->
 
-<font size=4>Paper: [<font size=4>arxiv</font>](https://arxiv.org/abs/2010.14804)
+<font size=4>Paper: </font>[<font size=4>arxiv</font>](https://arxiv.org/abs/2010.14804)
 
 # Abstract
 
